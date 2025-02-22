@@ -1,0 +1,7 @@
+# vi:filetype=yaml
+
+tabWidth: 4
+
+# I read prettier's warning in the docs about this, but I find 80 kind of
+# obnoxious with the length of the discord.js API type names.
+printWidth: 100

@@ -5,12 +5,12 @@ import {
     ApplicationCommandOptionType,
     ApplicationCommandType,
     RESTPostAPIApplicationCommandsJSONBody,
-    RESTPostAPIChatInputApplicationCommandsJSONBody
+    RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from "discord-api-types/v10";
 
 interface InfoLine {
-    tokens: string[],
-    description: string,
+    tokens: string[];
+    description: string;
 }
 
 function formatBasicOption(cmd: APIApplicationCommandBasicOption): string {
@@ -19,7 +19,7 @@ function formatBasicOption(cmd: APIApplicationCommandBasicOption): string {
         case ApplicationCommandOptionType.String:
         case ApplicationCommandOptionType.Integer:
         case ApplicationCommandOptionType.Boolean:
-            inner = "..."
+            inner = "...";
             break;
         case ApplicationCommandOptionType.Role:
             inner = "@role";
@@ -70,7 +70,7 @@ function formatSubcommandGroup(cmd: APIApplicationCommandSubcommandGroupOption):
     return [
         // Also add a top-level description of the command group
         { tokens: [name, "..."], description: cmd.description },
-        ...options.map(cmd => {
+        ...options.map((cmd) => {
             const line = formatSubcommand(cmd);
 
             return { ...line, tokens: [name, ...line.tokens] };
@@ -91,8 +91,10 @@ function formatCommand(cmd: RESTPostAPIChatInputApplicationCommandsJSONBody): In
                     // (groupName ...)
                     // (groupName cmd1 opt1:<..> [opt2:<..>])
                     // (groupName cmd2 opt3:<..> [opt4:<..>])
-                    const subcGroups = formatSubcommandGroup(opt as APIApplicationCommandSubcommandGroupOption);
-                    const subcGroupLines: InfoLine[] = subcGroups.map(subc => {
+                    const subcGroups = formatSubcommandGroup(
+                        opt as APIApplicationCommandSubcommandGroupOption,
+                    );
+                    const subcGroupLines: InfoLine[] = subcGroups.map((subc) => {
                         const { description, tokens: cmdTokens } = subc;
                         return { description, tokens: [...tokens, ...cmdTokens] };
                     });
@@ -102,8 +104,10 @@ function formatCommand(cmd: RESTPostAPIChatInputApplicationCommandsJSONBody): In
                 case ApplicationCommandOptionType.Subcommand: {
                     // Subcommand will generate exactly one line
                     // (subcommandName opt1:<..> [opt2:<..>])
-                    const partialLine = formatSubcommand(opt as APIApplicationCommandSubcommandOption);
-                    const line = [...tokens, ...partialLine.tokens]
+                    const partialLine = formatSubcommand(
+                        opt as APIApplicationCommandSubcommandOption,
+                    );
+                    const line = [...tokens, ...partialLine.tokens];
                     lines.push({ ...partialLine, tokens: line });
                     break;
                 }
@@ -112,7 +116,7 @@ function formatCommand(cmd: RESTPostAPIChatInputApplicationCommandsJSONBody): In
                     // allow us to specify required options before subcommands
                     // (though i'm not sure if that's actually supported?)
                     const basicCmd = formatBasicOption(opt as APIApplicationCommandBasicOption);
-                    tokens.push(basicCmd)
+                    tokens.push(basicCmd);
                 }
             }
         }
@@ -122,26 +126,36 @@ function formatCommand(cmd: RESTPostAPIChatInputApplicationCommandsJSONBody): In
     // command, and will have appended at least one entry to lines.
     // If we have no subcommands, we will only be able to run the base command,
     // and will have all the options we've appended to tokens.
-    return lines.length > 0
-        ? lines
-        : [{ tokens, description: cmd.description }];
+    return lines.length > 0 ? lines : [{ tokens, description: cmd.description }];
 }
 
 export function formatCommandSet(cmds: RESTPostAPIApplicationCommandsJSONBody[]): string {
-    return cmds
-        // NOTE: we only format chat input (slash) commands in /help at this time.
-        .filter(c => c.type === ApplicationCommandType.ChatInput)
-        .map(c => {
-            // we ensure this above in our filter()
-            const cmd = c as RESTPostAPIChatInputApplicationCommandsJSONBody;
-            const infos = formatCommand(cmd);
-            const fullInfos = infos.length > 1
-                ? [{ tokens: [`/${cmd.name}`, "..."], description: cmd.description }, ...infos]
-                : infos;
+    return (
+        cmds
+            // NOTE: we only format chat input (slash) commands in /help at this time.
+            .filter((c) => c.type === ApplicationCommandType.ChatInput)
+            .map((c) => {
+                // we ensure this above in our filter()
+                const cmd = c as RESTPostAPIChatInputApplicationCommandsJSONBody;
+                const infos = formatCommand(cmd);
+                const fullInfos =
+                    infos.length > 1
+                        ? [
+                              {
+                                  tokens: [`/${cmd.name}`, "..."],
+                                  description: cmd.description,
+                              },
+                              ...infos,
+                          ]
+                        : infos;
 
-            return fullInfos.map(info => {
-                const cmdDesc = info.tokens.join(" ");
-                return `\`${cmdDesc}\`: ${info.description}`;
-            }).join("\n");
-        }).join("\n\n");
+                return fullInfos
+                    .map((info) => {
+                        const cmdDesc = info.tokens.join(" ");
+                        return `\`${cmdDesc}\`: ${info.description}`;
+                    })
+                    .join("\n");
+            })
+            .join("\n\n")
+    );
 }

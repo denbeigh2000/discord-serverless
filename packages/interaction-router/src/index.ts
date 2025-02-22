@@ -7,7 +7,6 @@ import {
     APIInteractionResponseChannelMessageWithSource,
     APIMessageComponentInteraction,
     APIModalSubmitInteraction,
-    ApplicationCommandType,
     InteractionResponseType,
     InteractionType,
     MessageFlags,
@@ -17,10 +16,21 @@ import {
 
 import { formatCommandSet } from "./help";
 
-type GenericFn<Context, Interaction, ReturnType> = (ctx: Context, interaction: Interaction) => Promise<ReturnType>;
-type CommandFn<Context> = GenericFn<Context, APIApplicationCommandInteraction, APIInteractionResponse>;
+type GenericFn<Context, Interaction, ReturnType> = (
+    ctx: Context,
+    interaction: Interaction,
+) => Promise<ReturnType>;
+type CommandFn<Context> = GenericFn<
+    Context,
+    APIApplicationCommandInteraction,
+    APIInteractionResponse
+>;
 type ComponentFn<Context> = GenericFn<Context, APIMessageComponentInteraction, void>;
-type AutocompleteFn<Context> = GenericFn<Context, APIApplicationCommandAutocompleteInteraction, APIApplicationCommandAutocompleteResponse>;
+type AutocompleteFn<Context> = GenericFn<
+    Context,
+    APIApplicationCommandAutocompleteInteraction,
+    APIApplicationCommandAutocompleteResponse
+>;
 type ModalSubmitFn<Context> = GenericFn<Context, APIModalSubmitInteraction, void>;
 
 const HelpCommandDesc: RESTPostAPIChatInputApplicationCommandsJSONBody = {
@@ -29,7 +39,7 @@ const HelpCommandDesc: RESTPostAPIChatInputApplicationCommandsJSONBody = {
 };
 
 interface CmdInfo {
-    discDescription: RESTPostAPIApplicationCommandsJSONBody,
+    discDescription: RESTPostAPIApplicationCommandsJSONBody;
 }
 
 export class InteractionRouter<Context> {
@@ -49,7 +59,11 @@ export class InteractionRouter<Context> {
         this.modalSubmissions = new Subrouter(ctx);
     }
 
-    public registerCommand(name: string, h: CommandFn<Context>, desc: RESTPostAPIApplicationCommandsJSONBody) {
+    public registerCommand(
+        name: string,
+        h: CommandFn<Context>,
+        desc: RESTPostAPIApplicationCommandsJSONBody,
+    ) {
         this.commands.register(name, h);
         this.cmdInfo.push({ discDescription: desc });
     }
@@ -67,10 +81,7 @@ export class InteractionRouter<Context> {
     }
 
     public getCommandSpec(): RESTPostAPIApplicationCommandsJSONBody[] {
-        return [
-            HelpCommandDesc,
-            ...this.cmdInfo.map(i => i.discDescription),
-        ];
+        return [HelpCommandDesc, ...this.cmdInfo.map((i) => i.discDescription)];
     }
 
     public extractIdIdentifier(id: string): string {
@@ -83,40 +94,41 @@ export class InteractionRouter<Context> {
         }
 
         switch (interaction.type) {
-            case InteractionType.ApplicationCommand:
+            case InteractionType.ApplicationCommand: {
                 const { name } = interaction.data;
-                if (name === "help")
-                    return this.handleHelp();
+                if (name === "help") return this.handleHelp();
 
-                const cmdResp = await this.commands.handle(name, interaction)
-                if (cmdResp === "missing")
-                    throw `TODO: missing command handler for ${name}`;
+                const cmdResp = await this.commands.handle(name, interaction);
+                if (cmdResp === "missing") throw `TODO: missing command handler for ${name}`;
 
                 return cmdResp;
+            }
 
-            case InteractionType.MessageComponent:
-                const componentEventId = interaction.data.custom_id;
-                const componentId = this.extractIdIdentifier(componentEventId);
-                if (await this.components.handle(componentId, interaction) === "missing")
-                    throw `TODO: missing component handler for ${componentEventId}`;
-
-                return null;
-
-            case InteractionType.ApplicationCommandAutocomplete:
-                const completeName = interaction.data.name;
-                const compResp = await this.completions.handle(completeName, interaction);
-                if (compResp === "missing")
-                    throw `TODO: missing autocomplete handler for ${completeName}`;
-
-                return compResp;
-
-            case InteractionType.ModalSubmit:
-                const modalEventId = interaction.data.custom_id;
-                const modalId = this.extractIdIdentifier(modalEventId);
-                if (await this.modalSubmissions.handle(modalId, interaction) === "missing")
-                    throw `TODO: missing modal submit handler for ${modalEventId}`;
+            case InteractionType.MessageComponent: {
+                const id = interaction.data.custom_id;
+                const name = this.extractIdIdentifier(id);
+                if ((await this.components.handle(name, interaction)) === "missing")
+                    throw `TODO: missing component handler for ${id}`;
 
                 return null;
+            }
+
+            case InteractionType.ApplicationCommandAutocomplete: {
+                const { name } = interaction.data;
+                const resp = await this.completions.handle(name, interaction);
+                if (resp === "missing") throw `TODO: missing autocomplete handler for ${name}`;
+
+                return resp;
+            }
+
+            case InteractionType.ModalSubmit: {
+                const id = interaction.data.custom_id;
+                const name = this.extractIdIdentifier(id);
+                if ((await this.modalSubmissions.handle(name, interaction)) === "missing")
+                    throw `TODO: missing modal submit handler for ${id}`;
+
+                return null;
+            }
         }
     }
 
@@ -131,7 +143,7 @@ export class InteractionRouter<Context> {
     }
 }
 
-export class Subrouter<Noun, Context, In extends APIInteraction, Out> {
+export class Subrouter<Context, In extends APIInteraction, Out> {
     ctx: Context;
     handlers: Record<string, GenericFn<Context, In, Out>>;
 
@@ -158,10 +170,22 @@ export class Subrouter<Noun, Context, In extends APIInteraction, Out> {
     }
 }
 
-type ApplicationCommandSubrouter<Context> = Subrouter<"command", Context, APIApplicationCommandInteraction, APIInteractionResponse>;
+type ApplicationCommandSubrouter<Context> = Subrouter<
+    Context,
+    APIApplicationCommandInteraction,
+    APIInteractionResponse
+>;
 
-type AutocompleteInteractionRouter<Context> = Subrouter<"autocomplete", Context, APIApplicationCommandAutocompleteInteraction, APIApplicationCommandAutocompleteResponse>;
+type AutocompleteInteractionRouter<Context> = Subrouter<
+    Context,
+    APIApplicationCommandAutocompleteInteraction,
+    APIApplicationCommandAutocompleteResponse
+>;
 
-type ModalSubmitInteractionRouter<Context> = Subrouter<"modal", Context, APIModalSubmitInteraction, void>;
+type ModalSubmitInteractionRouter<Context> = Subrouter<Context, APIModalSubmitInteraction, void>;
 
-type ComponentInteractionSubrouter<Context> = Subrouter<"component", Context, APIMessageComponentInteraction, void>
+type ComponentInteractionSubrouter<Context> = Subrouter<
+    Context,
+    APIMessageComponentInteraction,
+    void
+>;
