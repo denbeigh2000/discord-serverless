@@ -36,17 +36,19 @@ const encoder = new TextEncoder();
 
 export default async (
     key: string,
-    request: Request,
+    headers: Headers,
     bodyText: string
 ): Promise<boolean> => {
     const pubkey = await publicKey(key);
-    const timestamp = request.headers.get("X-Signature-Timestamp");
+    // TODO: we should probably also ensure this isn't too far in the past to
+    // guard against replay attacks
+    const timestamp = headers.get("X-Signature-Timestamp");
     if (!timestamp) {
         console.error("timestamp header missing");
         return false;
     }
 
-    const signature = request.headers.get("X-Signature-Ed25519");
+    const signature = headers.get("X-Signature-Ed25519");
     if (!signature) {
         console.error("signature header missing");
         return false;
