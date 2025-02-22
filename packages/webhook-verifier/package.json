@@ -1,5 +1,5 @@
 {
-  "name": "interaction-router",
+  "name": "verify-webhook",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,7 +10,6 @@
   "author": "",
   "devDependencies": {
     "@eslint/js": "^9.21.0",
-    "discord-api-types": "^0.37.119",
     "eslint": "^9.21.0",
     "prettier": "^3.5.2",
     "typescript": "^5.7.3",

@@ -1,12 +1,8 @@
 {
   "name": "cfworker-discord-tools",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Personal toolkit for my serverless discord bot(s)",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
   "license": "GPLv3"
 }
