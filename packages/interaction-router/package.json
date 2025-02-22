@@ -1,0 +1,15 @@
+{
+  "name": "interaction-router",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "discord-api-types": "^0.37.119"
+  }
+}
