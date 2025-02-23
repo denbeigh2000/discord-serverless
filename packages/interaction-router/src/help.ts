@@ -141,12 +141,12 @@ export function formatCommandSet(cmds: RESTPostAPIApplicationCommandsJSONBody[])
                 const fullInfos =
                     infos.length > 1
                         ? [
-                            {
-                                tokens: [`/${cmd.name}`, "..."],
-                                description: cmd.description,
-                            },
-                            ...infos,
-                        ]
+                              {
+                                  tokens: [`/${cmd.name}`, "..."],
+                                  description: cmd.description,
+                              },
+                              ...infos,
+                          ]
                         : infos;
 
                 return fullInfos

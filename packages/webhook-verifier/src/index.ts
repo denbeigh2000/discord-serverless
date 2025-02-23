@@ -34,10 +34,19 @@ async function publicKey(key: string): Promise<CryptoKey> {
 
 const encoder = new TextEncoder();
 
+/**
+ * Validates that is a valid Discord webhook request.
+ *
+ * @param key - The public key from the Discord Developer web UI.
+ * @param headers - The headers from the request.
+ * @param body - The body of the request as a string.
+ *
+ * @returns true if the request is correctly cryptographically signed
+ */
 export default async (
     key: string,
     headers: Headers,
-    bodyText: string
+    body: string
 ): Promise<boolean> => {
     const pubkey = await publicKey(key);
     // TODO: we should probably also ensure this isn't too far in the past to
@@ -54,7 +63,7 @@ export default async (
         return false;
     }
 
-    const payload = encoder.encode(timestamp + bodyText);
+    const payload = encoder.encode(timestamp + body);
 
     const sig = fromHex(signature);
     return crypto.subtle.verify("NODE-ED25519", pubkey, sig, payload);
